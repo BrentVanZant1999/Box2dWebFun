@@ -55,14 +55,20 @@
       
       //Setting angular velocity to  360 degrees per second and Setting initial position to  x = 2 and y = 3 and Initial Angle to 20 degrees anticlockwise
      blueOrb1.SetAngularVelocity(Math.PI*2);
-	 blueOrb2.SetAngularVelocity(Math.PI*1); 
+	 blueOrb2.SetAngularVelocity(Math.PI*1);
+	 blueOrb3.SetAngularVelocity(Math.PI*0.5);	 
+	 
      blueOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
-	 blueOrb2.SetPositionAndAngle(new b2Vec2(100, 200),0);
-	 blueOrb3.SetPositionAndAngle(new b2Vec2(100, 340),0);
+	 blueOrb2.SetPositionAndAngle(new b2Vec2(100, 200),Math.PI*1);
+	 blueOrb3.SetPositionAndAngle(new b2Vec2(100, 340),Math.PI*1.5);
 
-	 redOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
-	 redOrb2.SetPositionAndAngle(new b2Vec2(100, 200),0);
-	 redOrb3.SetPositionAndAngle(new b2Vec2(100, 340),0);	 
+	 redOrb1.SetAngularVelocity(Math.PI*2);
+	 redOrb2.SetAngularVelocity(Math.PI*1);
+	 redOrb3.SetAngularVelocity(Math.PI*0.5);	 
+	 
+	 redOrb1.SetPositionAndAngle(new b2Vec2(500, 60),0);
+	 redOrb2.SetPositionAndAngle(new b2Vec2(500, 200),Math.PI*0.4);
+	 redOrb3.SetPositionAndAngle(new b2Vec2(500, 340),Math.PI*1.2);	 
      // Ground
      var boundryDef = new b2BodyDef;
      boundryDef.type = b2Body.b2_staticBody;
