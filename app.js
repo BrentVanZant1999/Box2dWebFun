@@ -56,8 +56,13 @@
       //Setting angular velocity to  360 degrees per second and Setting initial position to  x = 2 and y = 3 and Initial Angle to 20 degrees anticlockwise
      blueOrb1.SetAngularVelocity(Math.PI*2);
 	 blueOrb2.SetAngularVelocity(Math.PI*1); 
-     blueOrb1.SetPositionAndAngle(new b2Vec2(2,3),0);
- 
+     blueOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
+	 blueOrb2.SetPositionAndAngle(new b2Vec2(100, 200),0);
+	 blueOrb3.SetPositionAndAngle(new b2Vec2(100, 340),0);
+
+	 redOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
+	 redOrb2.SetPositionAndAngle(new b2Vec2(100, 200),0);
+	 redOrb3.SetPositionAndAngle(new b2Vec2(100, 340),0);	 
      // Ground
      var boundryDef = new b2BodyDef;
      boundryDef.type = b2Body.b2_staticBody;
@@ -68,9 +73,7 @@
      fd.shape.SetAsBox(300,20);
         
      var holder = world.CreateBody(boundryDef);
-     holder.CreateFixture(fd);
- 
- 
+     holder.CreateFixture(fd); 
       
      var debugDraw = new b2DebugDraw();
      debugDraw.SetSprite ( document.getElementById ("canvas").getContext ("2d"));
