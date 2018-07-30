@@ -14,24 +14,40 @@
  
  
 		var world = new b2World(new b2Vec2(0,0), true);
-      
      //circle		
 		var orbDef = new b2BodyDef;
 		orbDef.type = b2Body.b2_dynamicBody;
 		orbDef.position.Set(4,8);
 		orbDef.userData = 'orb';
-      
+		
+		var postDef = new b2BodyDef; 
+		postDef.type = b2Body.b2_kinematicBody;
+        postDef.userData = 'ball';
+		
+		var postFix = new b2FixtureDef;
+		postFix.density =0.001;
+		postFix.shape = new b2CircleShape(5);
+        postFix.userData = 'ball'; 
+		
 		var blueOrb = new b2FixtureDef;
-		blueOrb.density = 12.0;
-		blueOrb.friction = 0;
+		blueOrb.density =0.001;
+		blueOrb.friction = 0.2;
+		blueOrb.restitution = .4; 
+		blueOrb.shape = new b2CircleShape(15);
+        blueOrb.userData = 'holding'; 
+		
+	   
+		var blueOrb = new b2FixtureDef;
+		blueOrb.density =0.001;
+		blueOrb.friction = 0.2;
 		blueOrb.restitution = .4; 
 		blueOrb.shape = new b2CircleShape(15);
         blueOrb.userData = 'holding'; 
 		
 		var redOrb = new b2FixtureDef;
-		redOrb.density = 12.0;
-		redOrb.friction = 0;
-		redOrb.restitution = .4; 
+		redOrb.density = 0.001;
+		redOrb.friction = 0.2;
+		redOrb.restitution = .8; 
 		redOrb.shape = new b2CircleShape(15);
         redOrb.userData = 'holding'; 
 
@@ -44,42 +60,61 @@
 		var blueOrb3 = world.CreateBody(orbDef);
 		blueOrb3.CreateFixture(blueOrb);
 		
+		
 		var redOrb1 = world.CreateBody(orbDef);
 		redOrb1.CreateFixture(redOrb);
+		
 		
 		var redOrb2 = world.CreateBody(orbDef);
 		redOrb2.CreateFixture(redOrb);
 		
+		
 		var redOrb3 = world.CreateBody(orbDef);
 		redOrb3.CreateFixture(redOrb);
-      
-      //Setting angular velocity to  360 degrees per second and Setting initial position to  x = 2 and y = 3 and Initial Angle to 20 degrees anticlockwise
-     blueOrb1.SetAngularVelocity(Math.PI*2);
-	 blueOrb2.SetAngularVelocity(Math.PI*1);
-	 blueOrb3.SetAngularVelocity(Math.PI*0.5);	 
 	 
-     blueOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
+	 
+	 //set the positions 
+	 
+	 blueOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
 	 blueOrb2.SetPositionAndAngle(new b2Vec2(100, 200),Math.PI*1);
 	 blueOrb3.SetPositionAndAngle(new b2Vec2(100, 340),Math.PI*1.5);
-
-	 redOrb1.SetAngularVelocity(Math.PI*2);
-	 redOrb2.SetAngularVelocity(Math.PI*1);
-	 redOrb3.SetAngularVelocity(Math.PI*0.5);	 
 	 
 	 redOrb1.SetPositionAndAngle(new b2Vec2(500, 60),0);
 	 redOrb2.SetPositionAndAngle(new b2Vec2(500, 200),Math.PI*0.4);
 	 redOrb3.SetPositionAndAngle(new b2Vec2(500, 340),Math.PI*1.2);	 
-     // Ground
+     
+	 // Ground
      var boundryDef = new b2BodyDef;
      boundryDef.type = b2Body.b2_staticBody;
-     boundryDef.position.Set(300,400);
-      
-     var fd = new b2FixtureDef;
-     fd.shape = new b2PolygonShape;
-     fd.shape.SetAsBox(300,20);
+     
+	 var boundryDefSide = new b2BodyDef;
+     boundryDefSide.type = b2Body.b2_staticBody;
+ 
+     var bound = new b2FixtureDef;
+     bound.shape = new b2PolygonShape;
+     bound.shape.SetAsBox(500,5);
+	 
+	 
+     var boundSide = new b2FixtureDef;
+     boundSide.shape = new b2PolygonShape;
+     boundSide.shape.SetAsBox(5,225);
         
-     var holder = world.CreateBody(boundryDef);
-     holder.CreateFixture(fd); 
+     var botBound = world.CreateBody(boundryDef);
+     botBound.CreateFixture(bound); 
+	 botBound.SetPositionAndAngle(new b2Vec2(500, 555),0);	 
+	 
+	 var topBound = world.CreateBody(boundryDef);
+     topBound.CreateFixture(bound); 
+	 topBound.SetPositionAndAngle(new b2Vec2(500, -5),0);	 
+	 
+	 var leftBound = world.CreateBody(boundryDefSide);
+     leftBound.CreateFixture(boundSide); 
+	 leftBound.SetPositionAndAngle(new b2Vec2(-5, 225),0);	 
+	 
+	 var rightBound = world.CreateBody(boundryDefSide);
+     rightBound.CreateFixture(boundSide); 
+	 rightBound.SetPositionAndAngle(new b2Vec2(1005, 225),0);	 
+	
       
      var debugDraw = new b2DebugDraw();
      debugDraw.SetSprite ( document.getElementById ("canvas").getContext ("2d"));
@@ -89,11 +124,58 @@
      debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
      world.SetDebugDraw(debugDraw);
       
-     window.setInterval(update,1000/60);
+   var c=1;	  
+   var mapKeys = []; 
+   window.addEventListener("keydown", function (e) {
+		mapKeys[e.keyCode] = true;
+	});
+   window.addEventListener("keyup", function (e) {
+		mapKeys[e.keyCode] = false;
+	});
+ 
+//force
+	function impulseRight(c) {
+		if(c==1)   { 
+			redOrb1.ApplyForce(new b2Vec2(100,0), redOrb1.GetWorldCenter(new b2Vec2(-15,0))); 
+		}
+	}
+	function impulseLeft(c) {
+		if(c==1)   { 
+			redOrb1.ApplyForce(new b2Vec2(-100,0), redOrb1.GetWorldCenter(new b2Vec2(15,0))); 
+		}
+	}
+	function impulseTop(c) {
+		if(c==1)   { 
+			redOrb1.ApplyForce(new b2Vec2(0,-100), redOrb1.GetWorldCenter(new b2Vec2(0,15)));  
+		}
+	}
+	function impulseBot(c) {
+		if(c==1)   { 
+			redOrb1.ApplyForce(new b2Vec2(0,100), redOrb1.GetWorldCenter(new b2Vec2(0,-15)));  
+		}
+	}	  
+	function checkKey() {
+		
+    if (mapKeys[87]) { //w 
+		impulseTop(1);
+    }
+    if (mapKeys[83]) { //s 
+        impulseBot(1);
+    }
+    if (mapKeys[65]) {
+       impulseLeft(1);
+    }
+    if (mapKeys[68]) {
+        impulseRight(1);
+    }
+	}
+    
+	window.setInterval(update,1000/60);
       
-     function update() {
+    function update() {
+		 checkKey();
          world.Step(1 / 60, 10, 10);
          world.DrawDebugData();
          world.ClearForces();
      };
-		  }
+}
