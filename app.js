@@ -12,15 +12,31 @@
 		var b2Fixture = Box2D.Dynamics.b2Fixture;
 		var b2AABB = Box2D.Collision.b2AABB;
  
+		//constants 
         const orbRadius = 12; 
 		const postRadius = 6; 
 		const forceApplied = 50;
+		const ballMaxVel = 200;
+		const mapCenterX = 500; 
+		const mapCenterY = 275;
+		const timeStep = 16.667; 
+		const ballDefault = 6000;
+		//event handling variables
+		 var mapKeys = [];    
+		 var orbPosses = [0,0,0,0,0,0]; 
+		 var lastPosses = [0,0,0,0,0,0]; 		 
+
+		//goal case variables
         var goalScored = false;
         var goalTimer = 3000;	
 		
-		//playerWorld
-		var world = new b2World(new b2Vec2(0,0), true);
-     //circle		
+		
+		//ball variables 
+		var ballisHeld = false; 
+		var ballPosAngle = 0; 
+		var ballTimer = 6000;
+			
+		//body definitions	
 		var orbDef = new b2BodyDef;
 		orbDef.type = b2Body.b2_dynamicBody;
 		orbDef.position.Set(4,8);
@@ -41,23 +57,27 @@
 		
 		var ballFix = new b2FixtureDef;
 		ballFix.density =0.001;
+		ballFix.restitution = 1; 
 		ballFix.shape = new b2CircleShape(postRadius);
         ballFix.userData = 'post'; 
 	   
 		var blueOrb = new b2FixtureDef;
 		blueOrb.density =0.001;
 		blueOrb.friction = 0.2;
-		blueOrb.restitution = .2; 
+		blueOrb.restitution = 1; 
 		blueOrb.shape = new b2CircleShape(orbRadius);
         blueOrb.userData = 'holding'; 
 		
 		var redOrb = new b2FixtureDef;
 		redOrb.density = 0.001;
 		redOrb.friction = 0.2;
-		redOrb.restitution = .2; 
+		redOrb.restitution = 1; 
 		redOrb.shape = new b2CircleShape(orbRadius);
         redOrb.userData = 'holding'; 
 
+		//playerWorld
+		var world = new b2World(new b2Vec2(0,0), true);
+		
 		var blueOrb1 = world.CreateBody(orbDef);
 		blueOrb1.CreateFixture(blueOrb);
 		
@@ -152,13 +172,30 @@
 		ballPostLeftBot.CreateFixture(postFix); 
 		ballPostLeftBot.SetPositionAndAngle(new b2Vec2(875, 321),0);
 		
+		var botBoundBall = ballWorld.CreateBody(boundryDef);
+		botBoundBall.CreateFixture(bound); 
+		botBoundBall.SetPositionAndAngle(new b2Vec2(500, 555),0);	 
+	 
+		var topBoundBall = ballWorld.CreateBody(boundryDef);
+		topBoundBall.CreateFixture(bound); 
+		topBoundBall.SetPositionAndAngle(new b2Vec2(500, -5),0);	 
+	 
+		var leftBoundBall = ballWorld.CreateBody(boundryDefSide);
+		leftBoundBall.CreateFixture(boundSide); 
+		leftBoundBall.SetPositionAndAngle(new b2Vec2(-5, 275),0);	 
+	 
+		var rightBoundBall= ballWorld.CreateBody(boundryDefSide);
+		rightBoundBall.CreateFixture(boundSide); 
+		rightBoundBall.SetPositionAndAngle(new b2Vec2(1005, 275),0);	
+		
 		var ball =  ballWorld.CreateBody(ballDef);
 		ball.CreateFixture(ballFix); 
 		ball.SetPositionAndAngle(new b2Vec2(500, 275),0);
 		
+		
+		
 		 
    //key mapping
-   var mapKeys = [];    
    window.addEventListener("keydown", function (e) {
 		mapKeys[e.keyCode] = true;
 	});
@@ -170,18 +207,40 @@
 	function impulseRight() {
 		redOrb1.ApplyForce(new b2Vec2(forceApplied,0), redOrb1.GetWorldCenter(new b2Vec2(-15,0))); 
 	}
-
 	function impulseLeft() {
 		redOrb1.ApplyForce(new b2Vec2(-(forceApplied),0), redOrb1.GetWorldCenter(new b2Vec2(15,0)));
 	}
 	function impulseTop() {
 		redOrb1.ApplyForce(new b2Vec2(0,-(forceApplied)), redOrb1.GetWorldCenter(new b2Vec2(0,15)));
 	}
-	
 	function impulseBot() {
 		redOrb1.ApplyForce(new b2Vec2(0,forceApplied), redOrb1.GetWorldCenter(new b2Vec2(0,-15)));
-	}	  
+	}
+
+	function shotHandler(orbIndex) {
+		//
+	}
+	function throwBall(angle) {
+		 ball.SetAwake(true);
+		 var xVel = ballMaxVel*(Math.cos(angle)); 
+		 var yVel = ballMaxVel*(Math.sin(angle)); 
+	     ball.SetLinearVelocity(new b2Vec2(xVel, yVel));
+		 ballisHeld = false;
+	}
 	
+	function checkCollision(ballX, ballY, orbX, orbY){
+		var dist = getDistance(ballX, ballY, orbX, orbY);
+		if ( dist <= orbRadius+postRadius ) {
+			console.log("true");
+			return true; 
+		}
+		return false;
+	}
+	function getDistance(xOne, yOne, xTwo, yTwo) {
+		var distance = 0;
+		distance = Math.hypot(xTwo-xOne, yTwo-yOne);
+		return distance; 
+	}
 	function checkKey() {
 		if (mapKeys[87]) { //w 
 			impulseTop();
@@ -194,6 +253,9 @@
 		}
 		if (mapKeys[68]) {
 			impulseRight();
+		}
+		if (mapKeys[90]) {
+			throwBall(0);
 		}
 	}
 	function drawOrb(xCen, yCen, color) {
@@ -250,7 +312,7 @@
 		pos = ball.GetPosition(); 
 		xCenter = pos.x;
 		yCenter = pos.y;
-		drawBall(xCenter,yCenter,"#000000");
+		drawBall(xCenter,yCenter,"#FFFFFF");
 		
 		pos = redOrb1.GetPosition(); 
 		xCenter = pos.x;
@@ -285,13 +347,115 @@
 
 		//draw using canvas 
 	}
+	function ballCalc(){
+		//calculate where it should be on orb
+		//check if ball should be ejected
+		if (ballisHeld) {
+			ballTimer = ballTimer - timeStep;
+			console.log(ballTimer);
+
+
+			if ( ballTimer <= 0 )
+			{
+				throwBall(Math.random() * (Math.PI*2));
+			}
+		}
+		//checks if the ball is being collided with by an orb
+		else { 
+			//check if there is a collision 
+			for ( var i = 0; i < 6; i++ ) {
+				if ( i === 0 ) {
+					if (checkCollision(ball.GetPosition().x, ball.GetPosition().y, blueOrb1.GetPosition().x, blueOrb1.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(blueOrb1.GetPosition().y - ball.GetPosition().y, blueOrb1.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true; 
+						ballTimer = ballDefault;
+						break; 
+					}
+				}
+				else if ( i === 1) {
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb2.GetPosition().x, blueOrb2.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(blueOrb2.GetPosition().y - ball.GetPosition().y, blueOrb2.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true; 
+						ballTimer = ballDefault;
+						break; 
+					}
+				}
+				else if ( i === 2) {
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb3.GetPosition().x, blueOrb3.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(blueOrb3.GetPosition().y - ball.GetPosition().y, blueOrb3.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true; 
+						ballTimer = ballDefault;
+						break; 
+					}
+				}
+				else if ( i === 3) {
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb1.GetPosition().x, redOrb1.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(redOrb1.GetPosition().y - ball.GetPosition().y, redOrb1.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true; 
+						ballTimer = ballDefault;
+						break; 
+					}
+				}
+				else if ( i === 4) {
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb2.GetPosition().x, redOrb2.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(redOrb2.GetPosition().y - ball.GetPosition().y, redOrb2.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true;
+						ballTimer = ballDefault;						
+						break; 
+					}
+				}
+				else if ( i === 5) {
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb3.GetPosition().x, redOrb3.GetPosition().y))
+					{
+						ballPosAngle = Math.atan2(redOrb3.GetPosition().y - ball.GetPosition().y, redOrb3.GetPosition().x - ball.GetPosition().x);
+						orbPosses = [0,0,0,0,0,0];
+						lastPosses = [0,0,0,0,0,0];
+						orbPosses[i] = 1;
+						lastPosses[i] = 1; 	
+						ballisHeld = true; 
+						ballTimer = ballDefault;
+						break; 
+					}
+				}
+			
+			}			
+		}
+	}
+	
 	
 	window.setInterval(update,1000/60);
     function update() {
 		 checkKey();
          world.Step(1 / 60, 10, 10);
 		 world.ClearForces();
-		 //ballCalc();
+		 ballWorld.Step(1 / 60, 10, 10);
+		 ballWorld.ClearForces();
+		 ballCalc();
 		 //goalCalc(); 
 		 drawWorld(); 
     };
