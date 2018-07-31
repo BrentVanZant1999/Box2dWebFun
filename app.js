@@ -13,19 +13,27 @@
 		var b2AABB = Box2D.Collision.b2AABB;
  
 		//constants 
-        const orbRadius = 12; 
-		const postRadius = 6; 
-		const forceApplied = 50;
-		const ballMaxVel = 200;
+        const orbRadius = 3; 
+		const postRadius = 1.5; 
+		const diamondRadius = 2; 
+		const forceApplied = 5;
+		const ballMaxVel = 500;
 		const mapCenterX = 500; 
 		const mapCenterY = 275;
 		const timeStep = 16.667; 
 		const ballDefault = 6000;
+		const regrabTime  = 300; 
+		
+		
 		//event handling variables
-		 var mapKeys = [];    
-		 var orbPosses = [0,0,0,0,0,0]; 
-		 var lastPosses = [0,0,0,0,0,0]; 		 
-
+		var mousePositionX = 0;
+		var mousePositionY = 0; 
+		var mapKeys = [];    
+		var orbPosses = [0,0,0,0,0,0]; 
+		var lastPosses = [0,0,0,0,0,0]; 		 
+		var regrabTimer = 0; 
+		var myIndex = 3; 
+		var mouseAngle = 0; 
 		//goal case variables
         var goalScored = false;
         var goalTimer = 3000;	
@@ -35,7 +43,8 @@
 		var ballisHeld = false; 
 		var ballPosAngle = 0; 
 		var ballTimer = 6000;
-			
+		var ballCurrentTeam = -1;
+		
 		//body definitions	
 		var orbDef = new b2BodyDef;
 		orbDef.type = b2Body.b2_dynamicBody;
@@ -51,25 +60,25 @@
         ballDef.userData = 'ball';
 		
 		var postFix = new b2FixtureDef;
-		postFix.density =0.001;
+		postFix.density =0.01;
 		postFix.shape = new b2CircleShape(postRadius);
         postFix.userData = 'post'; 
 		
 		var ballFix = new b2FixtureDef;
-		ballFix.density =0.001;
+		ballFix.density =0.01;
 		ballFix.restitution = 1; 
 		ballFix.shape = new b2CircleShape(postRadius);
         ballFix.userData = 'post'; 
 	   
 		var blueOrb = new b2FixtureDef;
-		blueOrb.density =0.001;
+		blueOrb.density =0.01;
 		blueOrb.friction = 0.2;
 		blueOrb.restitution = 1; 
 		blueOrb.shape = new b2CircleShape(orbRadius);
         blueOrb.userData = 'holding'; 
 		
 		var redOrb = new b2FixtureDef;
-		redOrb.density = 0.001;
+		redOrb.density = 0.01;
 		redOrb.friction = 0.2;
 		redOrb.restitution = 1; 
 		redOrb.shape = new b2CircleShape(orbRadius);
@@ -97,12 +106,12 @@
 		redOrb3.CreateFixture(redOrb);
 	 
 		//set the positions 
-		blueOrb1.SetPositionAndAngle(new b2Vec2(100, 60),0);
-		blueOrb2.SetPositionAndAngle(new b2Vec2(100, 200),Math.PI*1);
-		blueOrb3.SetPositionAndAngle(new b2Vec2(100, 340),Math.PI*1.5);
-		redOrb1.SetPositionAndAngle(new b2Vec2(500, 60),0);
-		redOrb2.SetPositionAndAngle(new b2Vec2(500, 200),Math.PI*0.4);
-		redOrb3.SetPositionAndAngle(new b2Vec2(500, 340),Math.PI*1.2);	 
+		blueOrb1.SetPositionAndAngle(new b2Vec2(100/4, 60/4),0);
+		blueOrb2.SetPositionAndAngle(new b2Vec2(100/4, 200/4),Math.PI*1);
+		blueOrb3.SetPositionAndAngle(new b2Vec2(100/4, 340/4),Math.PI*1.5);
+		redOrb1.SetPositionAndAngle(new b2Vec2(500/4, 60/4),0);
+		redOrb2.SetPositionAndAngle(new b2Vec2(500/4, 200/4),Math.PI*0.4);
+		redOrb3.SetPositionAndAngle(new b2Vec2(500/4, 340/4),Math.PI*1.2);	 
      
 		// Ground
 		var boundryDef = new b2BodyDef;
@@ -113,84 +122,84 @@
  
 		var bound = new b2FixtureDef;
 		bound.shape = new b2PolygonShape;
-		bound.shape.SetAsBox(500,5);
+		bound.shape.SetAsBox(500/4,5/4);
 	 
 		var boundSide = new b2FixtureDef;
 		boundSide.shape = new b2PolygonShape;
-		boundSide.shape.SetAsBox(5,275);
+		boundSide.shape.SetAsBox(5/4,275/4);
         
 		var botBound = world.CreateBody(boundryDef);
 		botBound.CreateFixture(bound); 
-		botBound.SetPositionAndAngle(new b2Vec2(500, 555),0);	 
+		botBound.SetPositionAndAngle(new b2Vec2(500/4, 555/4),0);	 
 	 
 		var topBound = world.CreateBody(boundryDef);
 		topBound.CreateFixture(bound); 
-		topBound.SetPositionAndAngle(new b2Vec2(500, -5),0);	 
+		topBound.SetPositionAndAngle(new b2Vec2(500/4, -5/4),0);	 
 	 
 		var leftBound = world.CreateBody(boundryDefSide);
 		leftBound.CreateFixture(boundSide); 
-		leftBound.SetPositionAndAngle(new b2Vec2(-5, 275),0);	 
+		leftBound.SetPositionAndAngle(new b2Vec2(-5/4, 275/4),0);	 
 	 
 		var rightBound = world.CreateBody(boundryDefSide);
 		rightBound.CreateFixture(boundSide); 
-		rightBound.SetPositionAndAngle(new b2Vec2(1005, 275),0);	 
+		rightBound.SetPositionAndAngle(new b2Vec2(1005/4, 275/4),0);	 
 	    // END Ground
 		
 		// Goal Posts 
 		var postRightTop = world.CreateBody(postDef);
 		postRightTop.CreateFixture(postFix); 
-		postRightTop.SetPositionAndAngle(new b2Vec2(125, 229),0);
+		postRightTop.SetPositionAndAngle(new b2Vec2(125/4, 229/4),0);
 		
 		var postRightBot = world.CreateBody(postDef);
 		postRightBot.CreateFixture(postFix); 
-		postRightBot.SetPositionAndAngle(new b2Vec2(125, 321),0);
+		postRightBot.SetPositionAndAngle(new b2Vec2(125/4, 321/4),0);
 		
 		var postLeftTop = world.CreateBody(postDef);
 		postLeftTop.CreateFixture(postFix); 
-		postLeftTop.SetPositionAndAngle(new b2Vec2(875, 229),0);
+		postLeftTop.SetPositionAndAngle(new b2Vec2(875/4, 229/4),0);
 		
 		var postLeftBot = world.CreateBody(postDef);
 		postLeftBot.CreateFixture(postFix); 
-		postLeftBot.SetPositionAndAngle(new b2Vec2(875, 321),0);
+		postLeftBot.SetPositionAndAngle(new b2Vec2(875/4, 321/4),0);
 		// END Goal Posts       
 		
 		//ballWorld
 		var ballWorld = new b2World(new b2Vec2(0,0), true);
 		var ballPostRightTop = ballWorld.CreateBody(postDef);
 		ballPostRightTop.CreateFixture(postFix); 
-		ballPostRightTop.SetPositionAndAngle(new b2Vec2(125, 229),0);
+		ballPostRightTop.SetPositionAndAngle(new b2Vec2(125/4, 229/4),0);
 		
 		var ballPostRightBot = ballWorld.CreateBody(postDef);
 		ballPostRightBot.CreateFixture(postFix); 
-		ballPostRightBot.SetPositionAndAngle(new b2Vec2(125, 321),0);
+		ballPostRightBot.SetPositionAndAngle(new b2Vec2(125/4, 321/4),0);
 		
 		var ballPostLeftTop = ballWorld.CreateBody(postDef);
 		ballPostLeftTop.CreateFixture(postFix); 
-		ballPostLeftTop.SetPositionAndAngle(new b2Vec2(875, 229),0);
+		ballPostLeftTop.SetPositionAndAngle(new b2Vec2(875/4, 229/4),0);
 		
 		var ballPostLeftBot = ballWorld.CreateBody(postDef);
 		ballPostLeftBot.CreateFixture(postFix); 
-		ballPostLeftBot.SetPositionAndAngle(new b2Vec2(875, 321),0);
+		ballPostLeftBot.SetPositionAndAngle(new b2Vec2(875/4, 321/4),0);
 		
 		var botBoundBall = ballWorld.CreateBody(boundryDef);
 		botBoundBall.CreateFixture(bound); 
-		botBoundBall.SetPositionAndAngle(new b2Vec2(500, 555),0);	 
+		botBoundBall.SetPositionAndAngle(new b2Vec2(500/4, 555/4),0);	 
 	 
 		var topBoundBall = ballWorld.CreateBody(boundryDef);
 		topBoundBall.CreateFixture(bound); 
-		topBoundBall.SetPositionAndAngle(new b2Vec2(500, -5),0);	 
+		topBoundBall.SetPositionAndAngle(new b2Vec2(500/4, -5/4),0);	 
 	 
 		var leftBoundBall = ballWorld.CreateBody(boundryDefSide);
 		leftBoundBall.CreateFixture(boundSide); 
-		leftBoundBall.SetPositionAndAngle(new b2Vec2(-5, 275),0);	 
+		leftBoundBall.SetPositionAndAngle(new b2Vec2(-5/4, 275/4),0);	 
 	 
 		var rightBoundBall= ballWorld.CreateBody(boundryDefSide);
 		rightBoundBall.CreateFixture(boundSide); 
-		rightBoundBall.SetPositionAndAngle(new b2Vec2(1005, 275),0);	
+		rightBoundBall.SetPositionAndAngle(new b2Vec2(1005/4, 275/4),0);	
 		
 		var ball =  ballWorld.CreateBody(ballDef);
 		ball.CreateFixture(ballFix); 
-		ball.SetPositionAndAngle(new b2Vec2(500, 275),0);
+		ball.SetPositionAndAngle(new b2Vec2(500/4, 275/4),0);
 		
 		
 		
@@ -217,8 +226,13 @@
 		redOrb1.ApplyForce(new b2Vec2(0,forceApplied), redOrb1.GetWorldCenter(new b2Vec2(0,-15)));
 	}
 
-	function shotHandler(orbIndex) {
-		//
+	function shotHandler() {
+		if ( ballisHeld == true ) {
+			if ( orbPosses[myIndex] === 1 ) {
+				console.log('In here');
+				throwBall(mouseAngle);
+			}
+		}		
 	}
 	function throwBall(angle) {
 		 ball.SetAwake(true);
@@ -226,6 +240,7 @@
 		 var yVel = ballMaxVel*(Math.sin(angle)); 
 	     ball.SetLinearVelocity(new b2Vec2(xVel, yVel));
 		 ballisHeld = false;
+		 regrabTimer = regrabTime; 
 	}
 	
 	function checkCollision(ballX, ballY, orbX, orbY){
@@ -248,14 +263,32 @@
 		if (mapKeys[83]) { //s 
 			impulseBot();
 		}
-		if (mapKeys[65]) {
+		if (mapKeys[65]) { //a
 			impulseLeft();
 		}
-		if (mapKeys[68]) {
+		if (mapKeys[68]) { //d
 			impulseRight();
 		}
-		if (mapKeys[90]) {
-			throwBall(0);
+		if (mapKeys[90]) { //z
+			shotHandler();
+		}
+		if (mapKeys[49]) { //1
+			//activate gravity diamond 1
+		}
+		if (mapKeys[50]) { //2
+			//activate gravity diamond 2
+		}
+		if (mapKeys[51]) { //3
+			//activate gravity diamond 3
+		}
+		if (mapKeys[52]) { //4
+			//activate gravity diamond 4
+		}
+		if (mapKeys[53]) { //5
+			//activate gravity diamond 5
+		}
+		if (mapKeys[54]) { //6
+			//activate gravity diamond 6
 		}
 	}
 	function drawOrb(xCen, yCen, color) {
@@ -263,7 +296,7 @@
 		var ctx = canvas.getContext("2d");
 		ctx.fillStyle = color;
 		ctx.beginPath();
-		ctx.arc(xCen, yCen, orbRadius, 0, Math.PI * 2, true);
+		ctx.arc(xCen*4, yCen*4, orbRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 	}
@@ -272,7 +305,7 @@
 		var ctx = canvas.getContext("2d");
 		ctx.fillStyle = color;
 		ctx.beginPath();
-		ctx.arc(xCen, yCen, postRadius, 0, Math.PI * 2, true);
+		ctx.arc(xCen*4, yCen*4, postRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 	}
@@ -281,24 +314,22 @@
 		var ctx = canvas.getContext("2d");
 		ctx.fillStyle = color;
 		ctx.beginPath();
-		ctx.arc(875, 321, postRadius, 0, Math.PI * 2, true);
+		ctx.arc(875, 321, postRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 		ctx.beginPath();
-		ctx.arc(875, 229, postRadius, 0, Math.PI * 2, true);
+		ctx.arc(875, 229, postRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 		ctx.beginPath();
-		ctx.arc(125, 321, postRadius, 0, Math.PI * 2, true);
+		ctx.arc(125, 321, postRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 		ctx.beginPath();
-		ctx.arc(125, 229, postRadius, 0, Math.PI * 2, true);
+		ctx.arc(125, 229, postRadius*4, 0, Math.PI * 2, true);
 		ctx.closePath();
 		ctx.fill();
 	}
-	
-	
     function drawWorld() {
 		var canvas = document.getElementById("canvas");
 		var context = canvas.getContext('2d');
@@ -308,11 +339,6 @@
 		var xCenter = 0; 
 		var yCenter = 0; 
 		drawPosts("#FFFFFF"); 
-		
-		pos = ball.GetPosition(); 
-		xCenter = pos.x;
-		yCenter = pos.y;
-		drawBall(xCenter,yCenter,"#FFFFFF");
 		
 		pos = redOrb1.GetPosition(); 
 		xCenter = pos.x;
@@ -344,7 +370,11 @@
 		yCenter = pos.y;		
 		drawOrb(xCenter,yCenter,"#0000FF"); 		
 		
-
+		pos = ball.GetPosition(); 
+		xCenter = pos.x;
+		yCenter = pos.y;
+		drawBall(xCenter,yCenter,"#FFFFFF");
+		
 		//draw using canvas 
 	}
 	function ballCalc(){
@@ -352,20 +382,46 @@
 		//check if ball should be ejected
 		if (ballisHeld) {
 			ballTimer = ballTimer - timeStep;
-			console.log(ballTimer);
-
-
+			
+			
+			ball.SetLinearVelocity(new b2Vec2(0, 0));
+			if (orbPosses[0]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(blueOrb1.GetPosition().x, blueOrb1.GetPosition().y));
+			}
+			else if ( orbPosses[1]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(blueOrb2.GetPosition().x, blueOrb2.GetPosition().y));	
+			}
+			else if ( orbPosses[2]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(blueOrb3.GetPosition().x, blueOrb3.GetPosition().y));
+			}
+			else if ( orbPosses[3]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(redOrb1.GetPosition().x, redOrb1.GetPosition().y));
+			}
+			else if ( orbPosses[4]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(redOrb2.GetPosition().x, redOrb2.GetPosition().y));
+			}
+			else if ( orbPosses[5]  == 1 ) {
+				ball.SetPositionAndAngle(new b2Vec2(redOrb3.GetPosition().x, redOrb3.GetPosition().y));
+			}
+			
 			if ( ballTimer <= 0 )
 			{
 				throwBall(Math.random() * (Math.PI*2));
 			}
+
 		}
 		//checks if the ball is being collided with by an orb
 		else { 
 			//check if there is a collision 
+			regrabTimer = regrabTimer - timeStep;
+			console.log(regrabTimer);
+			if ( regrabTimer <= -1 ) {
+				lastPosses = [0,0,0,0,0,0];
+				regrabTimer = -1; 
+			}
 			for ( var i = 0; i < 6; i++ ) {
 				if ( i === 0 ) {
-					if (checkCollision(ball.GetPosition().x, ball.GetPosition().y, blueOrb1.GetPosition().x, blueOrb1.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x, ball.GetPosition().y, blueOrb1.GetPosition().x, blueOrb1.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(blueOrb1.GetPosition().y - ball.GetPosition().y, blueOrb1.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
@@ -378,7 +434,7 @@
 					}
 				}
 				else if ( i === 1) {
-					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb2.GetPosition().x, blueOrb2.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb2.GetPosition().x, blueOrb2.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(blueOrb2.GetPosition().y - ball.GetPosition().y, blueOrb2.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
@@ -391,7 +447,7 @@
 					}
 				}
 				else if ( i === 2) {
-					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb3.GetPosition().x, blueOrb3.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , blueOrb3.GetPosition().x, blueOrb3.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(blueOrb3.GetPosition().y - ball.GetPosition().y, blueOrb3.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
@@ -404,7 +460,7 @@
 					}
 				}
 				else if ( i === 3) {
-					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb1.GetPosition().x, redOrb1.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb1.GetPosition().x, redOrb1.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(redOrb1.GetPosition().y - ball.GetPosition().y, redOrb1.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
@@ -417,7 +473,7 @@
 					}
 				}
 				else if ( i === 4) {
-					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb2.GetPosition().x, redOrb2.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb2.GetPosition().x, redOrb2.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(redOrb2.GetPosition().y - ball.GetPosition().y, redOrb2.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
@@ -430,7 +486,7 @@
 					}
 				}
 				else if ( i === 5) {
-					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb3.GetPosition().x, redOrb3.GetPosition().y))
+					if (checkCollision(ball.GetPosition().x,ball.GetPosition().y , redOrb3.GetPosition().x, redOrb3.GetPosition().y) && lastPosses[i] == 0)
 					{
 						ballPosAngle = Math.atan2(redOrb3.GetPosition().y - ball.GetPosition().y, redOrb3.GetPosition().x - ball.GetPosition().x);
 						orbPosses = [0,0,0,0,0,0];
